@@ -14,12 +14,7 @@ import shutil
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 TEAM = [
-    ('Rebeca Saldaña Espinoza', 'A01735498'),
-    ('José Alfredo Guerrero Fernández', 'A01736556'),
-    ('Jose David Bautista Zuñiga', 'A01734266'),
-    ('Sina Jovy', 'A01833561'),
     ('Gabriel Said Vera Carballo', 'A00839097'),
-    ('Luis Héctor Muñoz Del Razo', 'A01738595'),
 ]
 REPO = 'https://github.com/Gabrysaid/pure_pursuit_ws'
 DATE = 'September 27, 2026'
@@ -189,7 +184,7 @@ code {{ font-family: 'DejaVu Sans Mono', monospace; font-size: 9.5pt; }}
   <div class="lbl">Assignment</div>
   <div>M4 Activity 2: Implementing a Pure Pursuit Controller in ROS 2</div>
   <div class="lbl">Professor</div><div>Arturo Daniel Sosa Cerón</div>
-  <div class="lbl">Team</div><div>{team_html}</div>
+  <div class="lbl">Student</div><div>{team_html}</div>
   <div class="lbl">GitHub repository</div><div><a href="{REPO}">{REPO}</a></div>
   <div class="lbl">Date</div><div>{DATE}</div>
 </section>
@@ -320,7 +315,7 @@ Design, architecture, and uses in the wild," <i>Science Robotics</i>, vol. 7, no
 <p>[7] A. D. Sosa Cerón, "movilidad_inteligente" course repository (prius_bringup),
 github.com/dsosa114/movilidad_inteligente, 2026.</p>
 <p>[8] Anthropic, Claude [AI assistant], claude.ai, 2026. Used mainly for translation of the
-report and for programming support (code drafting, debugging and simulation scripts). The team recorded the
+report and for programming support (code drafting, debugging and simulation scripts). The author recorded the
 reference path by teleoperation and reviewed the results and the final content.</p>
 </section>
 </body></html>"""
