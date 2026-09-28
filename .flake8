@@ -1,0 +1,6 @@
+# Same style ROS 2 uses in ament_flake8
+[flake8]
+max-line-length = 99
+import-order-style = google
+application-import-names = pure_pursuit_controller
+exclude = build,install,log,src/prius_bringup

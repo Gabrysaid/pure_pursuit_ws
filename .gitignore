@@ -1,0 +1,9 @@
+build/
+install/
+log/
+__pycache__/
+*.pyc
+.pytest_cache/
+report/build/
+src/prius_bringup/
+PROMPT_CLAUDE_CODE.md
