@@ -65,13 +65,12 @@ git clone https://github.com/Gabrysaid/pure_pursuit_ws ~/Workspace/pure_pursuit_
 git clone https://github.com/dsosa114/movilidad_inteligente /tmp/movilidad_inteligente
 cp -r /tmp/movilidad_inteligente/prius_bringup ~/Workspace/pure_pursuit_ws/src/
 cd ~/Workspace/pure_pursuit_ws
+# CMake 4 warns about cmake_minimum_required(VERSION 3.8) in the upstream package
+sed -i '1s/VERSION 3.8)/VERSION 3.10)/' src/prius_bringup/CMakeLists.txt
 source /opt/ros/lyrical/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
-
-With CMake 4 the upstream `prius_bringup` prints a deprecation warning for
-`cmake_minimum_required(VERSION 3.8)`; changing it to `3.10` removes it.
 
 ## 1. Record the reference path
 
@@ -90,6 +89,13 @@ Restart the simulation first so the odometry starts again at the spawn pose.
 ```bash
 ros2 launch pure_pursuit_controller pure_pursuit.launch.py run_tag:=main
 # the car drives one lap and stops; Ctrl+C writes ~/pp_data/actual_trajectory_main.csv
+```
+
+The reference we recorded is included, so tracking can be tested without driving:
+
+```bash
+ros2 launch pure_pursuit_controller pure_pursuit.launch.py \
+  waypoints_file:=$PWD/results/gazebo/waypoints.csv run_tag:=test
 ```
 
 Launch arguments: `target_speed:=4.0 lookahead_min:=3.0 lookahead_gain:=0.4 run_tag:=k04`.
