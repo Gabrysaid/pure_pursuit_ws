@@ -127,11 +127,11 @@ def plot_overlay(ref, runs, results, out, title):
         ax.plot(pts[:, 0], pts[:, 1], color=COLORS[i % len(COLORS)],
                 label=f'Executed, {label} (mean CTE {m["mean"]:.2f} m)')
     ax.plot(*ref[0], 'o', color=REF_COLOR, ms=6, label='Start')
-    ax.set_aspect('equal', adjustable='datalim')
-    ax.set_xlabel('x [m] (odom frame)')
-    ax.set_ylabel('y [m] (odom frame)')
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xlabel('x [m], odom frame')
+    ax.set_ylabel('y [m]')
     ax.set_title(title)
-    ax.legend(loc='best', frameon=False)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.28), ncol=2, frameon=False)
     for ext in ('pdf', 'svg', 'png'):
         fig.savefig(os.path.join(out, f'overlay.{ext}'), dpi=200)
     plt.close(fig)
@@ -139,7 +139,7 @@ def plot_overlay(ref, runs, results, out, title):
 
 def plot_error_profile(ref, runs, results, out, closed):
     s_ref = arc_length(ref if not closed else np.vstack([ref, ref[:1]]))
-    fig, ax = plt.subplots(figsize=(6.4, 2.4))
+    fig, ax = plt.subplots(figsize=(6.4, 2.0))
     # shade curved sections of the reference
     first = results[runs[0][0]]
     kappa_mask = curve_mask(ref, first['curve_threshold'])
