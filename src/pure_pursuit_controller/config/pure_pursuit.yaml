@@ -1,0 +1,20 @@
+# Pure Pursuit parameters for the Prius in prius_bringup (Gazebo Harmonic)
+pure_pursuit_node:
+  ros__parameters:
+    waypoints_file: "~/pp_data/waypoints.csv"
+    wheelbase: 2.7          # m, <wheel_base> of the AckermannSteering plugin
+    max_steer: 0.5          # rad, <steering_limit> of the same plugin
+    target_speed: 4.0       # m/s
+    lookahead_min: 3.0      # m, Ld at zero speed
+    lookahead_gain: 0.4     # s, Ld = lookahead_min + lookahead_gain * v
+    lookahead_max: 15.0     # m
+    closed_loop: true       # the recorded path is a loop
+    laps: 1                 # stop after one lap (0 = never stop)
+    control_rate: 20.0      # Hz, timer driven control loop
+    odom_timeout: 0.5       # s, stop if odometry goes stale
+    goal_tolerance: 1.5     # m, only for open paths
+
+path_recorder:
+  ros__parameters:
+    min_distance: 0.5       # m between stored points
+    odom_topic: "/odom"
