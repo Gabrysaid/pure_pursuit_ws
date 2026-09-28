@@ -320,8 +320,8 @@ Design, architecture, and uses in the wild," <i>Science Robotics</i>, vol. 7, no
 <p>[7] A. D. Sosa Cerón, "movilidad_inteligente" course repository (prius_bringup),
 github.com/dsosa114/movilidad_inteligente, 2026.</p>
 <p>[8] Anthropic, Claude [AI assistant], claude.ai, 2026. Used mainly for translation of the
-report and for programming support (code drafting and debugging). The team ran the simulations,
-analyzed the results and reviewed the final content.</p>
+report and for programming support (code drafting, debugging and simulation scripts). The team recorded the
+reference path by teleoperation and reviewed the results and the final content.</p>
 </section>
 </body></html>"""
     html_path = os.path.join(build, 'report.html')
