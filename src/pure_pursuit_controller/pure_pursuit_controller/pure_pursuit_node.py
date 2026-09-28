@@ -8,6 +8,7 @@ how fast odometry arrives.
 """
 import math
 import os
+import signal
 
 from geometry_msgs.msg import PointStamped, Twist
 from nav_msgs.msg import Odometry
@@ -166,15 +167,26 @@ class PurePursuitNode(Node):
         self.get_logger().info(f'{reason}, vehicle stopped')
 
 
+def _raise_keyboard_interrupt(signum, frame):
+    raise KeyboardInterrupt
+
+
 def main(args=None):
-    # we handle Ctrl+C ourselves so the context is still alive to send a stop
+    # we handle Ctrl+C ourselves so the context is still alive to send a stop. The handlers are
+    # set explicitly because a parent (script, launch) may have started us with SIGINT ignored,
+    # and SIGTERM (launch escalation) must also end in the stop command
     rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, _raise_keyboard_interrupt)
     node = PurePursuitNode()
     try:
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        # a second Ctrl+C must not interrupt the stop command
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
         # leave the car stopped if we are interrupted mid-run
         if rclpy.ok():
             node.publish_cmd(0.0, 0.0)

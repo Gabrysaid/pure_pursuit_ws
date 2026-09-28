@@ -6,12 +6,14 @@ by teleop, and again during autonomous tracking (actual_trajectory.csv).
 """
 import math
 import os
+import signal
 
 from nav_msgs.msg import Odometry
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
+from rclpy.signals import SignalHandlerOptions
 
 from pure_pursuit_controller.pure_pursuit_core import save_points
 
@@ -81,14 +83,25 @@ class PathRecorder(Node):
               f'{os.path.abspath(self.output_file)}')
 
 
+def _raise_keyboard_interrupt(signum, frame):
+    raise KeyboardInterrupt
+
+
 def main(args=None):
-    rclpy.init(args=args)
+    # Ctrl+C (or SIGTERM from launch) raises KeyboardInterrupt in spin, so the CSV is written in
+    # the finally block while the context is still valid; this avoids racing rclpy's own handler
+    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, _raise_keyboard_interrupt)
     node = PathRecorder()
     try:
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        # a second Ctrl+C must not interrupt the file write
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
         node.save()
         node.destroy_node()
         if rclpy.ok():
