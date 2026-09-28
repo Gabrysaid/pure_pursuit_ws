@@ -97,7 +97,7 @@ def main():
         max_txt = fmt(m_all['max'])
         st_txt, cu_txt = fmt(m_st['mean']), fmt(m_cu['mean'])
         ratio_txt = f'{m_cu["mean"] / max(m_st["mean"], 1e-9):.1f}'
-        ref_txt = f'{ref_pts} waypoints ({ref_len:.0f} m)'
+        ref_txt = f'{ref_pts} waypoints over a total distance of {ref_len:.0f} m'
     else:
         mean_txt = rms_txt = max_txt = st_txt = cu_txt = ratio_txt = pending('X.XX')
         ref_txt = pending('N waypoints (L m)')
@@ -116,27 +116,34 @@ def main():
         return fmt(sw[k][part]['mean'])
     best_k = min(ks, key=lambda k: sw[k]['all']['mean']) if ks else None
     if ks:
+        k0_max = fmt(sw[0.0]['all']['max'])
         sweep_txt = (
-            'The sweep shows the expected U shape. With a short look-ahead (k = 0, '
-            f'L<sub>d</sub> = 3 m) the geometric gain 2L/L<sub>d</sub><sup>2</sup> is high and, '
-            'combined with the steering lag, the car overshoots every corner and loops around the '
-            f'path: the mean CTE is {sw_mean(0.0)} m and the maximum {fmt(sw[0.0]["all"]["max"])} m. '
-            'That run also stopped before closing the lap, because the forward index search '
-            'advanced while the car was looping. Increasing k damps the response: at k = 0.2 s '
-            f'the mean drops to {sw_mean(0.2)} m. Between k = 0.4 and 0.8 s the curve is flat '
-            f'({sw_mean(0.4)} and {sw_mean(0.8)} m); the longer preview keeps improving the '
-            f'straights ({sw_mean(0.4, "straight")} to {sw_mean(0.8, "straight")} m) but the curve '
-            f'error already grows ({sw_mean(0.4, "curve")} to {sw_mean(0.8, "curve")} m). At '
-            f'k = 1.2 s the chord to the target cuts the inside of the corners, the curve error '
-            f'rises to {sw_mean(1.2, "curve")} m and the mean to {sw_mean(1.2)} m. Making '
-            'L<sub>d</sub> proportional to speed keeps the preview time constant, so the same k '
-            f'transfers across speeds. The lowest mean CTE was at k = {best_k} s, but its '
-            'difference with k = 0.4 s (0.02 m) is smaller than what a single run can resolve. '
-            'We selected k = 0.4 s with L<sub>d,min</sub> = 3 m because it gives the lowest '
-            'curve error and the lowest maximum error, i.e. the best compromise between '
-            'oscillation and corner cutting.')
+            '<p>With a short look-ahead, such as k = 0, the look-ahead distance stays at 3 m. '
+            'This makes the geometric gain 2L/L<sub>d</sub><sup>2</sup> relatively high. '
+            'Together with the steering lag, this causes the vehicle to overshoot the corners '
+            f'and loop around the path. The mean CTE in this case was {sw_mean(0.0)} m and the '
+            f'maximum error was {k0_max} m. The vehicle also stopped before completing the lap '
+            'because the forward index continued advancing while the vehicle was looping.</p>'
+            f'<p>Increasing k reduces this behavior. At k = 0.2 s, the mean CTE decreased to '
+            f'{sw_mean(0.2)} m. Between k = 0.4 and k = 0.8 s, the mean error changed only '
+            f'slightly, from {sw_mean(0.4)} to {sw_mean(0.8)} m. During this range, the longer '
+            'look-ahead improved the performance on straight sections, reducing the error from '
+            f'{sw_mean(0.4, "straight")} to {sw_mean(0.8, "straight")} m, but the curve error '
+            f'increased from {sw_mean(0.4, "curve")} to {sw_mean(0.8, "curve")} m. At k = 1.2 s, '
+            'the target point is farther ahead and the controller starts cutting the inside of '
+            f'the corners more. As a result, the curve error increases to {sw_mean(1.2, "curve")} '
+            f'm and the mean CTE increases to {sw_mean(1.2)} m.</p>'
+            '<p>Because L<sub>d</sub> is proportional to speed, the preview time remains '
+            'approximately constant. This means the same value of k can be used at different '
+            f'speeds. The lowest mean CTE in the tests was obtained with k = {best_k} s, but the '
+            f'difference between k = {best_k} and k = 0.4 was only '
+            f'{abs(sw[0.4]["all"]["mean"] - sw[best_k]["all"]["mean"]):.2f} m, which is smaller '
+            'than what can be reliably distinguished from a single run. For this reason, we '
+            'selected k = 0.4 s with L<sub>d,min</sub> = 3 m. This configuration gave a lower '
+            'curve error and a lower maximum error while keeping a good balance between '
+            'oscillation and corner cutting.</p>')
     else:
-        sweep_txt = pending('Gazebo sweep pending.')
+        sweep_txt = '<p>' + pending('Gazebo sweep pending.') + '</p>'
     sweep_src = ('Gazebo' if gz_sweep else
                  'offline kinematic bicycle (v = 8 m/s, L<sub>d,min</sub> = 1.5 m, '
                  '150 ms steering lag)')
@@ -146,20 +153,21 @@ def main():
     html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>M4 Activity 2 Pure Pursuit</title>
 <style>
-@page {{ size: Letter; margin: 2.2cm 2.2cm 2.0cm 2.2cm; }}
+@page {{ size: Letter; margin: 2.0cm; }}
 body {{ font-family: 'Times New Roman', 'Liberation Serif', serif; font-size: 12pt;
-       line-height: 1.22; color: #111; margin: 0; }}
-h1 {{ font-size: 13pt; margin: 9pt 0 3pt; break-after: avoid; page-break-after: avoid; }}
-p {{ margin: 0 0 5pt; text-align: justify; }}
+       line-height: 1.15; color: #111; margin: 0; }}
+sub, sup {{ line-height: 0; }}
+h1 {{ font-size: 13pt; margin: 6pt 0 2pt; break-after: avoid; page-break-after: avoid; }}
+p {{ margin: 0 0 4pt; text-align: justify; }}
 .cover {{ height: 23cm; display: flex; flex-direction: column; justify-content: center;
           text-align: center; page-break-after: always; }}
 .cover .inst {{ font-size: 18pt; font-weight: bold; }}
 .cover .campus {{ font-size: 15pt; margin-bottom: 1.6cm; }}
 .cover .lbl {{ font-weight: bold; margin-top: 0.55cm; }}
 .cover a {{ color: #1a4fa0; }}
-.eq {{ text-align: center; margin: 3pt 0 5pt; font-style: italic; }}
+.eq {{ text-align: center; margin: 2pt 0 3pt; font-style: italic; }}
 .eq span.n {{ float: right; font-style: normal; }}
-figure {{ margin: 4pt 0 6pt; text-align: center; }}
+figure {{ margin: 2pt 0 4pt; text-align: center; }}
 figure img {{ width: 100%; }}
 figcaption {{ font-size: 10pt; text-align: left; margin-top: 2pt; }}
 .row {{ display: flex; gap: 10pt; align-items: flex-start; }}
@@ -187,94 +195,116 @@ code {{ font-family: 'DejaVu Sans Mono', monospace; font-size: 9.5pt; }}
 </section>
 
 <h1>1. Implementation</h1>
-<p>We created the <code>ament_python</code> package <code>pure_pursuit_controller</code> with two
-nodes and a ROS free module (<code>pure_pursuit_core.py</code>) that holds all the math, so it can be
-unit tested without a simulator (6 pytest cases: yaw conversion, straight line, turn direction,
-bicycle mapping and index monotonicity over two laps). <b>path_recorder</b> subscribes to
-<code>/odom</code> (<code>nav_msgs/Odometry</code>) and appends (x, y) only when the Euclidean
-displacement from the last stored point exceeds <code>min_distance</code> = 0.5 m. The list is
-written to CSV from a <code>finally</code> block and from a context <code>on_shutdown</code> hook,
-so Ctrl+C always produces the file. The same node, launched with another output name, logs the
-executed path during autonomous runs.</p>
-<p><b>pure_pursuit_node</b> keeps clean callback boundaries: the odometry callback only stores the
-state (x, y, &theta;, v) and a timestamp, while a 20 Hz timer runs the controller and publishes
-<code>/cmd_vel</code> (<code>geometry_msgs/Twist</code>). This decouples the command rate from the
-odometry rate. If odometry is older than 0.5 s the node commands zero velocity, it stops by itself
-after one lap, and on Ctrl+C it sends a final stop because we disable the default rclpy signal handler.
-All gains are ROS parameters loaded from <code>config/pure_pursuit.yaml</code> and can be changed live
-through a parameter callback (<code>ros2 param set /pure_pursuit_node lookahead_gain 0.8</code>).
-For debugging, the node also publishes the target point and the signed cross track error.
-<code>launch/pure_pursuit.launch.py</code> includes <code>prius_bringup/gz_sim.launch.py</code> and,
-after a short delay, starts the controller and the trajectory logger. Command-line arguments set
-the speed, look-ahead and output file name. The reference was recorded with
-<code>teleop_twist_keyboard</code> using <code>record_path.launch.py</code>: {ref_txt}.</p>
+<p>We created the <code>ament_python</code> package <code>pure_pursuit_controller</code>, which
+contains two nodes and a ROS-free module called <code>pure_pursuit_core.py</code>. This module
+contains the main mathematical calculations, which allowed us to test them without running the
+simulator. We used 6 pytest cases to check yaw conversion, straight-line motion, turn direction,
+bicycle model mapping, and index monotonicity over two laps.</p>
+<p>The <b>path_recorder</b> node subscribes to <code>/odom</code> (<code>nav_msgs/Odometry</code>)
+and stores the (x, y) position only when the Euclidean distance from the last stored point is
+greater than <code>min_distance</code> = 0.5 m. The points are saved to a CSV file both from a
+<code>finally</code> block and an <code>on_shutdown</code> hook, so the file is still generated
+when the program is stopped with Ctrl+C. The same node can also be launched with a different output
+name to record the path followed during autonomous runs.</p>
+<p>The <b>pure_pursuit_node</b> separates the odometry callback from the controller. The callback
+only stores the current state (x, y, &theta;, v) and its timestamp, while a 20 Hz timer runs the
+controller and publishes <code>/cmd_vel</code> using <code>geometry_msgs/Twist</code>. This keeps
+the controller update rate independent from the odometry rate. If the odometry data is older than
+0.5 s, the node commands zero velocity. It also stops automatically after one lap and sends a final
+stop command when Ctrl+C is pressed. For this, the default <code>rclpy</code> signal handler is
+disabled. All controller gains are loaded as ROS parameters from
+<code>config/pure_pursuit.yaml</code> and can also be changed while the node is running, for
+example with <code>ros2 param set /pure_pursuit_node lookahead_gain 0.8</code>. The node also
+publishes the target point and the signed cross-track error to help with debugging.</p>
+<p>The launch file <code>launch/pure_pursuit.launch.py</code> includes
+<code>prius_bringup/gz_sim.launch.py</code>. After a short delay, it starts the controller and the
+trajectory logger. The speed, look-ahead parameters, and output file name can be changed using
+command-line arguments. The reference path was recorded using <code>teleop_twist_keyboard</code>
+and <code>record_path.launch.py</code>, resulting in {ref_txt}.</p>
 
 <h1>2. Control formulation</h1>
-<p>The planar heading is extracted from the odometry quaternion with the ZYX convention:</p>
+<p>The vehicle heading in the plane is obtained from the odometry quaternion using the ZYX
+convention:</p>
 <div class="eq">&theta; = atan2( 2(q<sub>w</sub>q<sub>z</sub> + q<sub>x</sub>q<sub>y</sub>),
  1 &minus; 2(q<sub>y</sub><sup>2</sup> + q<sub>z</sub><sup>2</sup>) ) <span class="n">(1)</span></div>
-<p>The look-ahead distance grows with speed, L<sub>d</sub> = L<sub>d,min</sub> + k&middot;v, clipped
-to 15 m. To avoid index jumps, the closest waypoint is searched only forward from the previous one
-inside a 60 point window, using an unwrapped counter so the closed loop is crossed without
-jumping back to index 0. Starting there, we advance until the first waypoint at a distance
-&ge; L<sub>d</sub> from the car; that is the target (x<sub>t</sub>, y<sub>t</sub>). With
-&alpha; = atan2(y<sub>t</sub> &minus; y, x<sub>t</sub> &minus; x) &minus; &theta; (wrapped to
-(&minus;&pi;, &pi;]), the arc through the car and the target has curvature
-&kappa; = 2 sin &alpha; / L<sub>d</sub>. For a bicycle model with wheelbase L, tan &delta; = L&kappa;,
-which gives the steering law and, since d&theta;/dt = v&kappa;, the yaw rate sent as
-<code>angular.z</code>:</p>
+<p>The look-ahead distance changes with the vehicle speed according to
+L<sub>d</sub> = L<sub>d,min</sub> + k&middot;v, with a maximum value of 15 m. To avoid jumping
+between different parts of the path, we search for the closest waypoint only in the forward
+direction from the previous waypoint and within a 60-point window. An unwrapped index is used so
+the controller can pass through the end of the closed path without going back to index 0. From the
+closest point, we move forward until finding the first waypoint whose distance from the vehicle is
+at least L<sub>d</sub>. This waypoint is used as the target point (x<sub>t</sub>, y<sub>t</sub>).
+The angle to the target, &alpha; = atan2(y<sub>t</sub> &minus; y, x<sub>t</sub> &minus; x)
+&minus; &theta;, is wrapped to the interval (&minus;&pi;, &pi;]. Using this angle, the curvature
+of the arc between the vehicle and the target point is &kappa; = 2 sin &alpha; / L<sub>d</sub>.
+For the bicycle model, the relationship between curvature and steering angle is
+tan &delta; = L&kappa;. Therefore, the steering angle used by the controller is:</p>
 <div class="eq">&delta; = tan<sup>&minus;1</sup>( 2L sin &alpha; / L<sub>d</sub> ), &nbsp;&nbsp;
 |&delta;| &le; 0.5 rad <span class="n">(2)</span></div>
+<p>Since d&theta;/dt = v&kappa;, the yaw rate sent as <code>angular.z</code> is:</p>
 <div class="eq">d&theta;/dt = v tan &delta; / L <span class="n">(3)</span></div>
-<p>L = 2.7 m and the 0.5 rad limit are taken from the <code>&lt;wheel_base&gt;</code> and
-<code>&lt;steering_limit&gt;</code> tags of the Prius <code>AckermannSteering</code> plugin. The
-plugin inverts (3) with the same L, so the commanded &delta; is exactly what reaches the front
-wheels. The commanded speed is used in (3) and the measured speed in L<sub>d</sub>. Defaults:
-v = 4 m/s, L<sub>d,min</sub> = 3 m, k = 0.4 s.</p>
+<p>The wheelbase L = 2.7 m and the 0.5 rad steering limit were taken from the
+<code>&lt;wheel_base&gt;</code> and <code>&lt;steering_limit&gt;</code> tags in the Prius
+<code>AckermannSteering</code> plugin. The plugin uses the same value of L when converting the
+command, so the steering angle calculated by the controller is the same one applied to the front
+wheels. The commanded speed is used in the yaw-rate equation (3), while the measured speed is used
+to calculate L<sub>d</sub>. The default parameters are v = 4 m/s, L<sub>d,min</sub> = 3 m, and
+k = 0.4 s.</p>
 
 <h1>3. Tracking performance</h1>
-<p>The cross track error (CTE) is the distance from every logged point to the closest segment of
-the reference polyline (<code>scripts/analyze_tracking.py</code>). Reference points whose curvature,
-computed over a 10 m stencil to filter the teleoperation wobble, exceeds 0.02 m<sup>&minus;1</sup>
-(R &lt; 50 m) are labeled curve; the rest are straights. All numbers come from Gazebo runs
-({src_txt}, v = 4 m/s) against the recorded reference, {ref_txt}. The teleoperated drive was
-trimmed where it rejoins the start straight (0.19 m gap), so the loop closes with a sharp
-junction.</p>
-<figure><img src="{fig_overlay}" style="width:68%">
+<p>The cross-track error (CTE) is calculated as the distance between each logged point and the
+closest segment of the reference path. This calculation is done in
+<code>scripts/analyze_tracking.py</code>. To separate curves from straight sections, we calculated
+the curvature of the reference path using a 10 m stencil. Points with a curvature greater than
+0.02 m<sup>&minus;1</sup>, equivalent to R &lt; 50 m, were classified as curves. The remaining
+points were classified as straights. All results were obtained from {src_txt} at 4 m/s,
+comparing the autonomous trajectory with the recorded reference path of {ref_txt}. The
+teleoperated path was trimmed at the point where it returned to the starting straight, leaving a
+0.19 m gap. This creates a sharp connection when the loop is closed.</p>
+<figure><img src="{fig_overlay}" style="width:72%">
 <figcaption><b>Fig. 1.</b> Reference path (waypoints.csv) against the executed trajectory
-(actual_trajectory_main.csv) in the odometry frame, equal axis scale.</figcaption></figure>
-<figure><img src="{fig_profile}" style="width:88%">
-<figcaption><b>Fig. 2.</b> Absolute CTE along the reference path (k = 0.4 s); shaded regions are
-curves. The spikes near 45 m are points of the S-bend excursion that lie closest to the start
-straight.</figcaption></figure>
-<p>For the default gains the mean CTE over the whole lap is {mean_txt} m (RMS {rms_txt} m,
-maximum {max_txt} m). On straights the mean is {st_txt} m and on curves {cu_txt} m, {ratio_txt}
-times larger. Two effects explain the difference. First, corner cutting: the target point is
-L<sub>d</sub> ahead, so it enters the curve before the car and the controller turns early, following
-a chord inside the arc. Second, steering lag: when we commanded &omega; = 0.3 rad/s in Gazebo
-the odometry reported only 0.275 rad/s after the transient, because the steering joints need time to
-reach the commanded angle. In the tight S-bend (R &asymp; 6 m, close to the minimum radius
-L/tan 0.5 = 4.9 m) the car saturates the steering, overshoots and loops once before
-rejoining the path, which produces the maximum error.</p>
+(actual_trajectory_main.csv) in the odometry frame, with equal axis scale.</figcaption></figure>
+<figure><img src="{fig_profile}" style="width:74%">
+<figcaption><b>Fig. 2.</b> Absolute CTE along the reference path (k = 0.4 s). Shaded regions
+represent curves. The spikes near 45 m correspond to points from the S-bend excursion that are
+closest to the starting straight.</figcaption></figure>
+<p>For the default parameters, the mean CTE over the complete lap was {mean_txt} m, with an RMS
+error of {rms_txt} m and a maximum error of {max_txt} m. On straight sections, the mean CTE was
+{st_txt} m, while on curves it increased to {cu_txt} m, which is {ratio_txt} times higher. There
+are two main reasons for this difference. The first one is corner cutting. Since the target point
+is located L<sub>d</sub> ahead of the vehicle, it can already be inside a curve before the vehicle
+reaches it. This makes the controller start turning earlier and follow a chord inside the curve
+instead of following the reference path exactly. The second factor is steering lag. When we
+commanded &omega; = 0.3 rad/s in Gazebo, the odometry reported only 0.275 rad/s after the
+transient. This happens because the steering joints need some time to reach the commanded angle.
+The effect becomes more important in the tight S-bend, where the radius is approximately 6 m. This
+is close to the minimum radius of L/tan(0.5) = 4.9 m. Because of the steering limit, the vehicle
+saturates the steering, overshoots the path, and makes one loop before returning to the reference.
+This produces the maximum tracking error.</p>
 
 <h1>4. Look-ahead tuning</h1>
+<p>We tested different values of the look-ahead gain k, keeping L<sub>d,min</sub> = 3 m and the
+speed at 4 m/s. Each value was tested in one Gazebo run, and the simulation was restarted before
+every run.</p>
 <div class="row">
-<figure style="flex:0.9"><img src="{fig_sweep}">
+<figure style="flex:0.8"><img src="{fig_sweep}">
 <figcaption><b>Fig. 3.</b> Mean CTE versus look-ahead gain k (L<sub>d,min</sub> = 3 m,
 v = 4 m/s), {sweep_src}.</figcaption></figure>
-<div style="flex:1.1">
+<div style="flex:1.2">
 <table><tr><th>Run</th><th>Mean</th><th>RMS</th><th>P95</th><th>Max</th><th>Straight</th>
 <th>Curve</th></tr>
 {gz_table}
 </table>
-<div class="tcap"><b>Table 1.</b> CTE in metres, one Gazebo run per k, simulation restarted
-before each run.</div>
+<div class="tcap"><b>Table 1.</b> CTE in metres. One Gazebo run was performed for each value of
+k, with the simulation restarted before each run.</div>
 </div></div>
-<p>{sweep_txt}</p>
-<p><b>Conclusion.</b> The package builds with colcon without warnings, runs the controller on a
-fixed-rate timer and reproduces the recorded path with a mean error of {mean_txt} m at 4 m/s.
-The main limitation is the tight S-bend, where the steering limit and lag dominate. A
-curvature-dependent speed profile or a Stanley term for the lateral error would reduce it.</p>
+{sweep_txt}
+<p><b>Conclusion.</b> The package builds successfully with <code>colcon</code> without warnings
+and runs the controller using a fixed-rate timer. At 4 m/s, the controller was able to reproduce
+the recorded path with a mean tracking error of {mean_txt} m. The main limitation was the tight
+S-bend, where the steering limit and the delay in the steering response had the greatest effect on
+the trajectory. A speed profile that changes according to the curvature or the addition of a
+Stanley term for lateral error could help reduce the tracking error in this section.</p>
 
 <section class="refs break">
 <h1>References</h1>
@@ -289,10 +319,9 @@ Design, architecture, and uses in the wild," <i>Science Robotics</i>, vol. 7, no
 <p>[6] Open Robotics, "Gazebo Sim AckermannSteering system," gazebosim.org/api/sim/10, 2026.</p>
 <p>[7] A. D. Sosa Cerón, "movilidad_inteligente" course repository (prius_bringup),
 github.com/dsosa114/movilidad_inteligente, 2026.</p>
-<h1>Appendix: use of AI</h1>
-<p>Claude (Anthropic) was used as a programming assistant to draft the package code, the
-analysis scripts and a first version of this text. The team reviewed, tested and edited all of
-it, ran the simulations and is responsible for the results.</p>
+<p>[8] Anthropic, Claude [AI assistant], claude.ai, 2026. Used mainly for translation of the
+report and for programming support (code drafting and debugging). The team ran the simulations,
+analyzed the results and reviewed the final content.</p>
 </section>
 </body></html>"""
     html_path = os.path.join(build, 'report.html')
